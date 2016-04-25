@@ -11,8 +11,12 @@ const request = os => {
   req.addEventListener('error', ev => streams.error(req.response))
   req.addEventListener('abort', ev => streams.abort(req.response))
   req.open(os.method, (os.prefix || '') + os.url, true)
-  if(os.send.constructor === Object) os.send = JSON.stringify(os.send)
-  for(var key in os.headers) req.setRequestHeader(key, os.headers[key])
+  if(os.send && os.send.constructor === Object) os.send = JSON.stringify(os.send)
+  if(os.headers) {
+    for(var key in os.headers) {
+      req.setRequestHeader(key, os.headers[key])
+    }
+  }
   req.send(os.send)
   return streams
 }
