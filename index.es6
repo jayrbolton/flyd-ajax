@@ -1,5 +1,3 @@
-// A simple 
-// Every call to .perform() returns a flyd stream
 import flyd from 'flyd'
 import R from 'ramda'
 
