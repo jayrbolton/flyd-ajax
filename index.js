@@ -1,5 +1,3 @@
-// A simple
-// Every call to .perform() returns a flyd stream
 'use strict';
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
@@ -16,7 +14,17 @@ var request = function request(os) {
   var streams = { load: _flyd2['default'].stream(), progress: _flyd2['default'].stream(), error: _flyd2['default'].stream(), abort: _flyd2['default'].stream() };
   var req = new XMLHttpRequest();
   req.addEventListener('load', function (ev) {
-    return streams.load(req.response);
+    var result = undefined;
+    if (req.getResponseHeader('Content-Type') === 'application/json') {
+      try {
+        result = JSON.parse(req.response);
+      } catch (e) {
+        result = req.response;
+      }
+    } else {
+      result = req.response;
+    }
+    streams.load(result);
   });
   req.addEventListener('progress', streams.progress);
   req.addEventListener('error', function (ev) {
@@ -25,7 +33,12 @@ var request = function request(os) {
   req.addEventListener('abort', function (ev) {
     return streams.abort(req.response);
   });
-  req.open(os.method, (os.prefix || '') + os.url, true);
+  if (os.query) {
+    os.path += "?" + _ramda2['default'].join('&', _ramda2['default'].map(_ramda2['default'].apply(function (key, val) {
+      return key + '=' + String(val);
+    }), _ramda2['default'].toPairs(os.query)));
+  }
+  req.open(os.method, (os.url || '') + os.path, true);
   if (os.send && (os.send.constructor === Object || os.send.constructor === Array)) os.send = JSON.stringify(os.send);
   if (os.headers) {
     for (var key in os.headers) {

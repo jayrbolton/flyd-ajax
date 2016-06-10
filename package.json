@@ -4,7 +4,9 @@
   "description": "Functional reactive ajax client",
   "main": "index.js",
   "scripts": {
-    "build": "babel index.es6 > index.js"
+    "build": "babel index.es6 > index.js",
+    "test": "zuul --local 8888 --ui mocha-qunit -- test/index.js",
+    "test_server": "node test/server.js"
   },
   "repository": {
     "type": "git",
@@ -23,5 +25,9 @@
   "dependencies": {
     "flyd": "0.2.2",
     "ramda": "0.21.0"
+  },
+  "devDependencies": {
+    "httpdispatcher": "1.0.0",
+    "xhr-mock": "1.6.0"
   }
 }

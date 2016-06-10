@@ -4,11 +4,23 @@ import R from 'ramda'
 const request = os => {
   let streams = { load: flyd.stream() , progress: flyd.stream()  , error: flyd.stream() , abort: flyd.stream() }
   let req = new XMLHttpRequest() 
-  req.addEventListener('load', ev => streams.load(req.response))
+  req.addEventListener('load', ev => {
+    let result
+    if(req.getResponseHeader('Content-Type') === 'application/json') {
+      try      { result = JSON.parse(req.response) } 
+      catch(e) { result = req.response }
+    } else {
+      result = req.response
+    }
+    streams.load(result)
+  })
   req.addEventListener('progress', streams.progress)
   req.addEventListener('error', ev => streams.error(req.response))
   req.addEventListener('abort', ev => streams.abort(req.response))
-  req.open(os.method, (os.prefix || '') + os.url, true)
+  if(os.query) {
+    os.path += "?" + R.join('&', R.map(R.apply((key, val) => `${key}=${String(val)}`), R.toPairs(os.query)))
+  }
+  req.open(os.method, (os.url || '') + os.path, true)
   if(os.send && (os.send.constructor === Object || os.send.constructor === Array)) os.send = JSON.stringify(os.send)
   if(os.headers) {
     for(var key in os.headers) {
