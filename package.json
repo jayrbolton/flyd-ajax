@@ -1,6 +1,6 @@
 {
   "name": "flyd-ajax",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "Functional reactive ajax client",
   "main": "index.js",
   "scripts": {
