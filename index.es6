@@ -6,7 +6,7 @@ const request = os => {
   let req = new XMLHttpRequest() 
   req.addEventListener('load', ev => {
     let result
-    if(req.getResponseHeader('Content-Type') === 'application/json') {
+    if(req.getResponseHeader('Content-Type').match('json')) {
       try      { result = JSON.parse(req.response) } 
       catch(e) { result = req.response }
     } else {
