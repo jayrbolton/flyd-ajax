@@ -15,7 +15,8 @@ var request = function request(os) {
   var req = new XMLHttpRequest();
   req.addEventListener('load', function (ev) {
     var result = undefined;
-    if (req.getResponseHeader('Content-Type').match('json')) {
+    var content = req.getResponseHeader('Content-Type');
+    if (content && content.match('json')) {
       try {
         result = JSON.parse(req.response);
       } catch (e) {
