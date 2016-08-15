@@ -13,15 +13,18 @@ test('GET request', done => {
   }).load
   flyd.map(
     r => {
-      assert.deepEqual(r, "/get/x?q=1")
+      assert.deepEqual(r.response, "/get/x?q=1")
       done()
     }
   , resp$
   )
 })
 
-test('POST data', done => {
-  const resp$ = request({
+test('POST data (with config)', done => {
+  const resp$ = request.config({
+    send: {x: 1}
+  , headers: {'Content-Type': 'application/json'}
+  })({
     method: "POST"
   , url: 'http://localhost:3333'
   , path: '/post/y'
@@ -29,7 +32,7 @@ test('POST data', done => {
   }).load
   flyd.map(
     r => {
-      assert.deepEqual(r, {y: 1})
+      assert.deepEqual(r.body, {y: 1})
       done()
     }
   , resp$

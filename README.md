@@ -24,34 +24,37 @@ The request function immediately returns an object with a set of streams:
 ```js
 // object that gets returned by the request function:
 {
-  load      // stream of a response object when the request is completed without errors
+  load      // stream of a response object when the request is completed
 , error     // response object when the request gets an error
 , progress  // stream of progress event objects
 , abort     // stream with aborted response
 }
 ```
 
-You can map over any of these objects to work with the responses. Example usage:
+Each of the above streams will emit the exact corresponding event or request objects as described here: https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest/Using_XMLHttpRequest
+
+**Bonus**: The `.load` stream will have a `.body` property, which will contain a parsed JS object of JSON data, if the response's header had 'json' in it.
+
+You can map over any of these streams to work with the responses and events. Example usage:
 
 ```js
 let getPosts = request({ method: 'GET' , path: '/posts' })
-flyd.map(resp => console.log('Success!', resp.body), getPosts.load)
-flyd.map(resp => console.log('Error!', resp.body), getPosts.error)
-flyd.map(ev => console.log('Progress!', ev), getPosts.progress)
+flyd.map(req => console.log('Completed request!', req.body), getPosts.load)
+flyd.map(ev => console.log('Error event!', ev), getPosts.error)
+flyd.map(ev => console.log('Progress event!', ev), getPosts.progress)
 ```
-
-Responses are JSON.stringified if possible.
 
 #### configuration
 
-You can config a request function with request.config. This returns a new request function that has the given settings preset for all of its calls.
+You can configure a request function with request.config. This returns a new request function that has the given settings preset for all of its calls. The presets will merge into any data passed in afterwards.
 
 ```js
 const myCustomRequestFn = request.config({
   headers: {'X-CSRF-Token': csrf}
+, send: {defaultSendData: 'xyz'}
 , url: 'http://url-to-prefix.com'
 })
-// all calls to myCustomRequestFn will have the above options preset
+// all calls to myCustomRequestFn will have the above options preset, and the above settings will get merged into any options with R.merge(config, newOptions)
 
 myCustomRequestFn({
   path: '/posts'
@@ -59,6 +62,7 @@ myCustomRequestFn({
 , headers: {'Content-Type': 'application/json'}
 })
 // This call will use the options from the original config, merged with the options we just provided (headers get merged with config headers as well)
+// The send property will get overridden
 ```
 
 #### toFormData

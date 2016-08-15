@@ -2,27 +2,30 @@ import flyd from 'flyd'
 import R from 'ramda'
 
 const request = os => {
-  let streams = { load: flyd.stream() , progress: flyd.stream()  , error: flyd.stream() , abort: flyd.stream() }
+  let streams = {load: flyd.stream(), progress: flyd.stream(), error: flyd.stream(), abort: flyd.stream()}
   let req = new XMLHttpRequest() 
   req.addEventListener('load', ev => {
-    let result
-    let content = req.getResponseHeader('Content-Type')
+    const content = req.getResponseHeader('Content-Type')
+    // Try to parse body if it is JSON -- but don't throw exceptions here
     if(content && content.match('json')) {
-      try      { result = JSON.parse(req.response) } 
-      catch(e) { result = req.response }
-    } else {
-      result = req.response
-    }
-    streams.load(result)
+      try      { req.body = JSON.parse(req.response) } 
+      catch(e) { }
+    } 
+    streams.load(req)
   })
   req.addEventListener('progress', streams.progress)
-  req.addEventListener('error', ev => streams.error(req.response))
-  req.addEventListener('abort', ev => streams.abort(req.response))
+  req.addEventListener('error', streams.error)
+  req.addEventListener('abort', streams.abort)
+  // Parse and append the query parameters, if provided as an object
   if(os.query) {
-    os.path += "?" + R.join('&', R.map(R.apply((key, val) => `${key}=${String(val)}`), R.toPairs(os.query)))
+    const keyVals = R.toPairs(os.query)
+    const joinedWithEquals = R.map(R.apply((key, val) => `${key}=${String(val)}`), keyVals)
+    os.path += "?" + R.join('&', joinedWithEquals)
   }
   req.open(os.method, (os.url || '') + os.path, true)
-  if(os.send && (os.send.constructor === Object || os.send.constructor === Array)) os.send = JSON.stringify(os.send)
+  if(os.send && (os.send.constructor === Object || os.send.constructor === Array)) {
+    os.send = JSON.stringify(os.send)
+  }
   if(os.headers) {
     for(var key in os.headers) {
       req.setRequestHeader(key, os.headers[key])
@@ -33,12 +36,16 @@ const request = os => {
 }
 
 // Merge in configuration options with regular request options to make pre-configured requests
-request.config = conf => options => request(
-  R.merge(
-    options
-  , R.assoc('headers', R.merge(conf.headers, options.headers), conf)
+request.config = R.curryN(2, (conf, newOptions) => {
+  return request(
+    R.compose(
+      R.merge(R.__, newOptions)
+    , R.assoc('query', R.merge(conf.query, newOptions.query))
+    , R.assoc('send', R.merge(conf.send, newOptions.send))
+    , R.assoc('headers', R.merge(conf.headers, newOptions.headers))
+    )(conf)
   )
-)
+})
 
 
 request.toFormData = obj => {
