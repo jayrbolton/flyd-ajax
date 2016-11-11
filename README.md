@@ -79,3 +79,40 @@ Then in another term, run zuul server:
 
 `npm run test`
 
+## Mocking requests for tests
+
+flyd-ajax comes with a built-in utility for mocking ajax requests for frontend unit testing.
+
+```js
+import assert from 'assert'
+import request from 'flyd-ajax'
+import mockRequest from 'flyd-ajax/mock'
+
+suite('test an ajax call')
+
+test('it handles some ajax', () => {
+  mockRequest.setup() // This overwrites XMLHttpRequest
+
+  const status = 201
+  body = 'hi'
+  mockRequest.handle('get', 'http://localhost:420/test', {status, body}) // mock a response from the server for a specific endpoint
+
+  // Make the actual request
+  const response$ = request({method: 'get', url: 'http://localhost:420', path: '/test'}).load
+ 
+ // The request will be made synchronously and the response is now available
+  assert.deepEqual(response$().body, {status, body})
+})
+```
+
+Mock functions:
+
+* `setup()` -- Overwrite `window.XMLHttpRequest`
+* `teardown()` -- Restore `window.XMLHttpRequest`
+* `handle(method, url, responseObject)` -- Catch and handle requests to this endpoint
+
+The `responseObject` can have these properties:
+
+* `body` -- response body
+* `headers` -- response headers
+* `status` -- response status code

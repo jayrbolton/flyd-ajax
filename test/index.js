@@ -1,8 +1,8 @@
-var assert = require('assert')
-var R = require("ramda")
-var flyd = require("flyd")
-
-var request = require('../')
+import assert from 'assert'
+import R from 'ramda'
+import flyd from 'flyd'
+import request from '../index.es6'
+import mock from '../mock.es6'
 
 test('GET request', done => {
   const resp$ = request({
@@ -37,5 +37,55 @@ test('POST data (with config)', done => {
     }
   , resp$
   )
+})
+
+suite('.toFormData')
+
+test("it converts a plain object into a FormData object", () => {
+  const obj = {x: 1, y: 2}
+  let fd = request.toFormData(obj)
+  assert.equal(fd.get('x'), '1')
+  assert.equal(fd.get('y'), '2')
+})
+
+
+suite('mock')
+const url = 'http://localhost:420'
+const method = 'get'
+
+test('sets the body of the response', () => {
+  mock.setup()
+  const body = {x:1, y: 2}
+  mock.handle('get', 'http://localhost:420/test', {body})
+  const load$ = request({method, url, path: '/test'}).load
+  assert.deepEqual(load$().body, body)
+  mock.teardown()
+})
+
+test('sets the headers of the response', () => {
+  mock.setup()
+  const headers = {x:1, y: 2}
+  mock.handle('get', 'http://localhost:420/test', {headers})
+  const load$ = request({method, url, path: '/test'}).load
+  assert.deepEqual(load$().getResponseHeader('x'), headers.x)
+  mock.teardown()
+})
+
+test('sets the status of the response', () => {
+  mock.setup()
+  const status = 201
+  mock.handle('get', 'http://localhost:420/test', {status})
+  const load$ = request({method, url, path: '/test'}).load
+  assert.deepEqual(load$().status, status)
+  mock.teardown()
+})
+
+test('it does not catch calls it does not handle', () => {
+  mock.setup()
+  const status = 201
+  mock.handle('get', 'http://localhost:420/test', {status})
+  const load$ = request({method, url, path: '/nope', headers: {'Accept': 'application/json'}}).load
+  assert.deepEqual(load$(), undefined)
+  mock.teardown()
 })
 
