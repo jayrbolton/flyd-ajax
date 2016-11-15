@@ -43,7 +43,12 @@ function setup() {
 
   window.XMLHttpRequest.prototype.send = function (strData) {
     var handler = handlers[this.method + ' ' + this.url];
-    if (!handler) return;
+    if (!handler) {
+      log('requested without handler: ' + this.method + ' ' + this.url);
+      return;
+    } else {
+      log('handled: ' + this.method + ' ' + this.url);
+    }
     var result = handler;
     this.body = result.body;
     this.headers = _ramda2.default.merge(this.headers, result.headers || {});
@@ -61,6 +66,10 @@ function setup() {
 
 function teardown() {
   window.XMLHttpRequest = cachedXMLHttpRequest;
+}
+
+function log(msg) {
+  if (console && console.log) console.log('flyd-ajax/mock:', msg);
 }
 
 module.exports = { handle: handle, setup: setup, teardown: teardown };
