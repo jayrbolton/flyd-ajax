@@ -24,11 +24,13 @@ function setup() {
     this.body = '';
     this.response = '';
     this.eventListeners = {};
+    this.realRequest = new cachedXMLHttpRequest();
     return this;
   };
 
   window.XMLHttpRequest.prototype.addEventListener = function (name, fn) {
     this.eventListeners[name] = fn;
+    this.realRequest.addEventListener.apply(this.realRequest, arguments);
     return this;
   };
 
@@ -38,6 +40,7 @@ function setup() {
 
   // No-op
   window.XMLHttpRequest.prototype.setRequestHeader = function (name, val) {
+    this.realRequest.setRequestHeader.apply(this.realRequest, arguments);
     return this;
   };
 
@@ -45,21 +48,25 @@ function setup() {
     var handler = handlers[this.method + ' ' + this.url];
     if (!handler) {
       log('requested without handler: ' + this.method + ' ' + this.url);
-      return;
+      log('current handlers:', _ramda2.default.keys(handlers));
+      return this.realRequest.send.apply(this.realRequest, arguments);
     } else {
       log('handled: ' + this.method + ' ' + this.url);
     }
     var result = handler;
-    this.body = result.body;
-    this.headers = _ramda2.default.merge(this.headers, result.headers || {});
-    this.status = result.status;
-    this.eventListeners.load();
+    if (!result.dontResolve) {
+      this.body = result.body;
+      this.headers = _ramda2.default.merge(this.headers, result.headers || {});
+      this.status = result.status;
+      this.eventListeners.load();
+    }
     return this;
   };
 
   window.XMLHttpRequest.prototype.open = function (method, url, bool) {
     this.method = method.toLowerCase();
     this.url = url;
+    this.realRequest.open.apply(this.realRequest, arguments);
     return this;
   };
 }

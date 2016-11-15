@@ -14,6 +14,7 @@ request({
 , path: '/'
 , send: 'x=y' // data to send; must be text, FormData, or an object (objects get JSON.stringify-ed)
 , headers: {'Content-Type': 'application/json'} // any number of header key/vals
+, dontResolve: true // Whether to keep this request pending indefinitely or to resolve it immediately (useful for testing loading states). Default is false
 })
 ```
 
