@@ -31,6 +31,7 @@ const request = os => {
       req.setRequestHeader(key, os.headers[key])
     }
   }
+  req.withCredentials = os.withCredentials
   req.send(os.send)
   return streams
 }
