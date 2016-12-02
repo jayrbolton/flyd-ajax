@@ -121,7 +121,7 @@ const errorMessage$  = R.compose(
 
 # Mocking requests for tests
 
-flyd-ajax comes with a built-in utility for mocking ajax requests for frontend unit testing.
+flyd-ajax comes with a built-in utility for mocking ajax requests for frontend unit testing. The require path is `flyd-ajax/mock`
 
 _Example_:
 
@@ -139,15 +139,18 @@ test('it handles some ajax', () => {
   body = 'hi'
   mockRequest.handle('get', 'http://localhost:420/test', {status, body}) // mock a response from the server for a specific endpoint
 
-  // Make the actual request
-  const response$ = request({method: 'get', url: 'http://localhost:420', path: '/test'}).load
+  // Make the request as you normally would
+  const resp = request({method: 'get', url: 'http://localhost:420', path: '/test'})
  
- // The request will be made synchronously and the response is now available
-  assert.deepEqual(response$().body, {status, body})
+  // The request will be made synchronously and the response is immediately available
+  assert.deepEqual(resp.load().body, {status, body})
+
+  // Restore XMLHttpRequest
+  mock.teardown()
 })
 ```
 
-Mock functions:
+Mock API:
 
 * `setup()` -- Overwrite `window.XMLHttpRequest`
 * `teardown()` -- Restore `window.XMLHttpRequest`
@@ -155,6 +158,6 @@ Mock functions:
 
 The `responseObject` can have these properties:
 
-* `body` -- response body
-* `headers` -- response headers
-* `status` -- response status code
+* `body` -- mock response body
+* `headers` -- mock response headers
+* `status` -- mock response status code
