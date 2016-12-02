@@ -111,11 +111,13 @@ const errorMessage$  = R.compose(
 
 ### Test
 
-`node test/server.js`
+Tests use zuul and assert
 
 `npm run test`
 
 ### Build
+
+Develop the `.es6` files and transpile them to `.js` with:
 
 `npm run build`
 

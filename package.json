@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "build": "babel index.es6 > index.js; babel mock.es6 > mock.js",
-    "test": "zuul --local 8888 --ui mocha-qunit -- test",
+    "test": "node test/server.js & zuul --local 8888 --ui mocha-qunit -- test",
     "test_server": "node test/server.js"
   },
   "repository": {
