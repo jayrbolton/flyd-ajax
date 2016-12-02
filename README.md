@@ -1,21 +1,47 @@
-A simple ajax library (a wrapper around XMLHttpRequest) that has an FRP API using [flyd](https://github.com/paldepind/flyd)
+# flyd-ajax
+
+A simple ajax library (using XMLHttpRequest) that returns **[flyd streams](https://github.com/paldepind/flyd)**.
 
 - Small size
-- Allows preconfiguration of ajax options (including headers, url)
-- Returns flyd streams of responses, including load/error/progress/abort
+- FRP with flyd
+- Supports mock requests for unit tests
+- Supports error/progress/abort
 
 Many of the options, terminology, and response objects are directly from the normal XMLHttpRequest API. See the [MDN Articles](https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest/Using_XMLHttpRequest#Handling_responses) on that topic for details around how to work with response and progress objects.
 
+Example _GET_ request
+
 ```js
-// options
-request({
+// Calling request(...) immediately makes the request
+const response = request({
   method: 'GET'
 , url: 'http://spacejam.com'
 , path: '/'
-, send: 'x=y' // data to send; must be text, FormData, or an object (objects get JSON.stringify-ed)
+, query: 'x=y' // data to send; must be text, FormData, or an object (objects get JSON.stringify-ed)
 , headers: {'Content-Type': 'application/json'} // any number of header key/vals
-, dontResolve: true // Whether to keep this request pending indefinitely or to resolve it immediately (useful for testing loading states). Default is false
+, withCredentials: true // whether to send cookies
 })
+
+// The response object has four keys: .load, .error, .progress, and .abort
+// Each of these keys holds a stream of request objects for the corresponding event
+// Most of the time you will just use .load stream
+
+const resp$ = request.load // flyd stream of request objects when the response is loaded
+flyd.map(r => console.log('Response!', r.body, r.status), resp$)
+```
+
+Example _POST_ request
+
+```js
+request({
+  method: 'post'
+, path: '/users'
+, send: {name: 'Finn Mertens', email: 'finn@ooo.com'} // Can be an Object, String, or FormData
+})
+
+// If you leave out url, it will post to the path on the current domain
+
+// If you pass in Object into the .send property, it will convert it to a JSON string by default
 ```
 
 ## Returned streams
@@ -25,16 +51,18 @@ The request function immediately returns an object with a set of streams:
 ```js
 // object that gets returned by the request function:
 {
-  load      // stream of a response object when the request is completed
-, error     // response object when the request gets an error
-, progress  // stream of progress event objects
-, abort     // stream with aborted response
+  load      // stream of a request object when the request is completed
+, error     // stream of event object when the request cannot be completed due to some error
+, progress  // stream of event object on progress events in the request
+, abort     // stream of event object on aborted request event
 }
 ```
 
+Most of the time you will only need the `.load` stream -- error and progress are useful for file transfers.
+
 Each of the above streams will emit the exact corresponding event or request objects as described here: https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest/Using_XMLHttpRequest
 
-**Bonus**: The `.load` stream will have a `.body` property, which will contain a parsed JS object of JSON data, if the response's header had 'json' in it.
+The `.load` stream will have a `.body` property, which will contain a parsed JS object of JSON data, if the response's had 'json' in its content type. Otherwise it will be a String.
 
 You can map over any of these streams to work with the responses and events. Example usage:
 
@@ -45,44 +73,57 @@ flyd.map(ev => console.log('Error event!', ev), getPosts.error)
 flyd.map(ev => console.log('Progress event!', ev), getPosts.progress)
 ```
 
-#### configuration
+#### Configuration
 
-You can configure a request function with request.config. This returns a new request function that has the given settings preset for all of its calls. The presets will merge into any data passed in afterwards.
+One easy way to pre-configure ajax requests is to simply define your own module that wraps the request function.
 
 ```js
-const myCustomRequestFn = request.config({
-  headers: {'X-CSRF-Token': csrf}
-, send: {defaultSendData: 'xyz'}
-, url: 'http://url-to-prefix.com'
-})
-// all calls to myCustomRequestFn will have the above options preset, and the above settings will get merged into any options with R.merge(config, newOptions)
+import request from 'flyd-ajax'
+import R from 'ramda'
+import flyd from 'flyd'
 
-myCustomRequestFn({
-  path: '/posts'
-, send: 'x=y'
-, headers: {'Content-Type': 'application/json'}
-})
-// This call will use the options from the original config, merged with the options we just provided (headers get merged with config headers as well)
-// The send property will get overridden
+const apiRequest = (method, path, data) =>
+  request({
+    method
+  , path
+  , url: api_url
+  , send: data
+  , headers: {'Content-Type': 'application/json', 'X-CSRF-Token': 'xyz'}
+  }).load
+
+// Stream of post responses, could be failure or success
+const response$ = apiRequest('post', '/users' {name: 'Finn Mertens'})
+
+// Stream of user data
+const createdUser$ = R.compose(
+  flyd.map(r => r.body)
+, flyd.filter(R.propEq('status', 200))
+)(response$) 
+
+// Stream of error messages from creating a user
+const errorMessage$  = R.compose(
+  flyd.map(r => r.body.error)
+, flyd.filter(r => r.status !== 200)
+)(response$)
 ```
 
-#### toFormData
+## Development
 
-For convenience, you can convert plain JS objects to FormData objects using `request.toFormData(obj)`. This is useful for sending files.
-
-## tests
-
-Test server:
+### Test
 
 `node test/server.js`
 
-Then in another term, run zuul server:
-
 `npm run test`
 
-## Mocking requests for tests
+### Build
+
+`npm run build`
+
+# Mocking requests for tests
 
 flyd-ajax comes with a built-in utility for mocking ajax requests for frontend unit testing.
+
+_Example_:
 
 ```js
 import assert from 'assert'
