@@ -36,19 +36,6 @@ const request = os => {
   return streams
 }
 
-// Merge in configuration options with regular request options to make pre-configured requests
-request.config = R.curryN(2, (conf, newOptions) => {
-  return request(
-    R.compose(
-      R.merge(R.__, newOptions)
-    , R.assoc('query', R.merge(conf.query, newOptions.query))
-    , R.assoc('send', R.merge(conf.send, newOptions.send))
-    , R.assoc('headers', R.merge(conf.headers, newOptions.headers))
-    )(conf)
-  )
-})
-
-
 request.toFormData = obj => {
   let fd = new FormData()
   for(var key in obj) fd.append(key, obj[key])

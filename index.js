@@ -48,11 +48,6 @@ var request = function request(os) {
   return streams;
 };
 
-// Merge in configuration options with regular request options to make pre-configured requests
-request.config = _ramda2.default.curryN(2, function (conf, newOptions) {
-  return request(_ramda2.default.compose(_ramda2.default.merge(_ramda2.default.__, newOptions), _ramda2.default.assoc('query', _ramda2.default.merge(conf.query, newOptions.query)), _ramda2.default.assoc('send', _ramda2.default.merge(conf.send, newOptions.send)), _ramda2.default.assoc('headers', _ramda2.default.merge(conf.headers, newOptions.headers)))(conf));
-});
-
 request.toFormData = function (obj) {
   var fd = new FormData();
   for (var key in obj) {

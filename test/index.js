@@ -20,15 +20,13 @@ test('GET request', done => {
   )
 })
 
-test('POST data (with config)', done => {
-  const resp$ = request.config({
-    send: {x: 1}
+test('POST data', done => {
+  const resp$ = request({
+    send: {y: 1}
   , headers: {'Content-Type': 'application/json'}
-  })({
-    method: "POST"
+  , method: "POST"
   , url: 'http://localhost:3333'
   , path: '/post/y'
-  , send: {y: 1}
   }).load
   flyd.map(
     r => {
